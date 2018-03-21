@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html>
+<head> <meta charset="utf-8"/>
+<link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet" type="text/css"/>
+<style>
+      body {
+        font-family: "Lato", sans-serif;
+        font-size: 120%;
+      }
+    </style>
+<link href="../prism.css" rel="stylesheet" type="text/css"/>
+<script src="../prism.js" type="text/javascript"></script>
+<script src="../display_tools.js"></script>
+</head>
+<body>
+<div id="header"></div>
+<div id="main"> <h2>CENT 280 - Project 2</h2>
+<p>
+        For this project, you will modify a GUI
+        program that can connect to a PostgreSQL database.
+        The existing GUI program, "query_db2.py" can be downloaded
+        from this <a href="query_db2.py" target="_blank">link</a>. This program can
+        connect to a PostgreSQL database and perform select
+        queries on the data. The results of the
+        select queries are displayed in a QTableWidget. The
+        functionality is broken up into two tabs. The
+        first tab allows the user to set the
+        database connection information. The second tab is where
+        the select queries are performed.
+      </p>
+<p>
+        Your task will be to add to this
+        program so that SQL scripts can be run
+        on a database. These could be scripts that
+        consist of SQL commands or scripts that create
+        plpgsql functions. Since plpgsql functions contain more than
+        just SQL commands, the best way to parse
+        these files is to make use of <b>psql</b>.
+        This means that your program will run <b>psql</b>
+        inside a <b>subprocess</b>.
+      </p>
+<p>
+        If we were going to run psql from
+        within a Python console program, it would be
+        relatively straightforward to accomplish this. Here is a
+        simple program that shows how this could be
+        done:
+      </p>
+<pre class="line-numbers" data-line=""><code class="language-python">
+import subprocess
+
+commands = ["psql","-U","bob","-W","proj2_db"]
+subprocess.run(commands,stdin=open("auth_funcs.sql"))</code></pre>
+<p>
+        This will execute the following command:
+      </p>
+<pre><code class="language-markup" style="font-family: Anonymous Pro;font-size: 85%;">
+psql -U bob -W proj2_db &lt; auth_funcs.sql</code></pre>
+<p>
+        If you were to run such a program,
+        you would be prompted for the password. Since
+        this is a console-based program, you would just
+        type in the password at the prompt in
+        the console.
+      </p>
+<p>
+        Responding to a console prompt is not something
+        that is done in a GUI program. To
+        get around having to respond to the prompt
+        for a password, we need to do two
+        things. The first, is to create a file
+        called <b>.pgpass</b> in the Linux user's home directory.
+        The contents of that file would be in
+        the following format:
+      </p>
+<pre><code class="language-markup" style="font-family: Anonymous Pro;font-size: 85%;">
+host:port:dbname:username:password</code></pre>
+<p>
+        For the proj2_db database, these values would be:
+      </p>
+<pre><code class="language-markup" style="font-family: Anonymous Pro;font-size: 85%;">
+localhost:5432:proj2_db:bob:somepass</code></pre>
+<p>
+        The second thing that would have to be
+        done would to remove the <b>-W</b> switch from
+        the psql command. If we saved the above
+        values inside <b>~/.pgpass</b>, then the following modified program
+        would work without having to respond to a
+        prompt:
+      </p>
+<pre class="line-numbers" data-line=""><code class="language-python">
+import subprocess
+
+commands = ["psql","-U","bob","proj2_db"]
+subprocess.run(commands,stdin=open("auth_funcs.sql"))</code></pre>
+<p>
+        The following program, "demo_subprocess.py", will create the <b>.pgpass</b>
+        file while the program is running. There are
+        two cases. The user may already have a
+        <b>~/.pgpass</b> file. If that file exists, the program
+        will make a copy of that file as
+        backup and write a new <b>~/.pgpass</b> file with
+        the database connection information. After the subprocess is
+        run, the old <b>~/.pgpass</b> file is restored from
+        the backup. If there is no <b>~/.pgpass</b> file,
+        the program creates that file, runs the subprocess
+        and then deletes that file:
+      </p>
+<pre class="line-numbers" data-line=""><code class="language-python">
+"""
+demo_subprocess.py
+By leaving off the -W to prompt for a password and
+by making use of .pgpass, this should work from a 
+GUI program
+"""
+import subprocess
+import os
+import os.path
+import shutil
+
+filename = input("Enter name of SQL file to run: ")
+
+commands = ["psql","-U","bob","proj2_db"]
+
+
+if (os.path.exists('/home/vern/.pgpass')):
+    shutil.copy('/home/vern/.pgpass','pgpass.bak')
+    outfile = open('/home/vern/.pgpass','w')
+    outfile.write('localhost:5432:proj2_db:bob:somepass')
+    outfile.close()
+    subprocess.run(commands,stdin=open(filename))
+    shutil.copy('pgpass.bak','/home/vern/.pgpass')
+else:
+    outfile = open('/home/vern/.pgpass','w')
+    os.chmod('/home/vern/.pgpass',0o600)
+    outfile.write('localhost:5432:proj2_db:bob:somepass')
+    outfile.close()
+    subprocess.run(commands,stdin=open(filename))
+    os.remove('/home/vern/.pgpass')</code></pre>
+<p>
+        Note that a Linux username of 'vern' is
+        assumed. You will need to use the actual
+        home directory as using the <b>~</b> instead of
+        <b>/home/&lt;username&gt;</b> will not work with the <b>os.path.exists()</b> function
+        and the <b>shutil.copy()</b> function. Also note that this
+        program will prompt for the name of the
+        SQL script to run.
+      </p>
+<h3>Steps to complete Project 2</h3>
+<h4>Add the ability to obtain the SQL script filename</h4>
+<p>
+        Get the name of the SQL script that
+        needs to be run using the QtGui.QFileDialog widget.
+        Some documentation for using this widget can be
+        found <a href="http://www2.hawaii.edu/~takebaya/cent110/gui/gui.html" target="_blank">here</a>. You will need to
+        add a QtGui.QAction menu item for initiating this
+        dialog.
+      </p>
+<h4>Add the ability to run the SQL script</h4>
+<p>
+        Create a class method that will run the
+        SQL script, once the filename for that script
+        has been obtained. The program, "demo_subprocess.py" listed above
+        can be used to help write this method.
+        This method should update the tables/views that become
+        available if the SQL script run creates tables/views.
+      </p>
+<h3>Requirements</h3>
+<ol><li>Create SQL scripts that will create the database tables (init.sql), add the plpgsql functions (auth_funcs.sql, insert_funcs.sql, query_funcs.sql) and add the initialdata (add_initial_data.sql).</li><li>In a LibreOffice Writer document, include the source code forthe modified "query_db2.py" program.</li><li>In that same document, include the SQL scripts that you loadedfor your proj2_db database.</li><li>In that same document, include screen shots showing the results of performing select queries on the database.</li><li>Answers to the following questions:<ul><li>Explain the advantage to using a .pgpass file whenusing a PostgreSQL database.</li><li>Explain a precaution that is used for the .pgpass file.</li><li>Explain two advantages of using a GUI program fordealing with databases as in this project's program.</li><li>Explain two disadvantages of using a GUI program fordealing with databases as in this project's program.</li></ul></li></ol></div>
+<div id="footer"></div>
+</body>
+</html>

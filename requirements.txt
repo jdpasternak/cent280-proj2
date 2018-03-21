@@ -1,0 +1,15 @@
+1. Create SQL scripts that will create the database tables (init.sql), 
+	add the plpgsql functions (auth_funcs.sql, insert_funcs.sql, query_funcs.sql) 
+	and add the initial data (add_initial_data.sql).
+	
+2. In a LibreOffice Writer document, include the source code for the modified "query_db2.py" program.
+
+3. In that same document, include the SQL scripts that you loaded for your proj2_db database.
+
+4. In that same document, include screen shots showing the results of performing select queries on the database.
+
+5. Answers to the following questions:
+	a. Explain the advantage to using a .pgpass file when using a PostgreSQL database.
+	b. Explain a precaution that is used for the .pgpass file.
+	c. Explain two advantages of using a GUI program for dealing with databases as in this project's program.
+	d. Explain two disadvantages of using a GUI program for dealing with databases as in this project's program.
